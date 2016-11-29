@@ -36,12 +36,14 @@ func parsePoint(line []byte) ([]byte, float64, uint32, error) {
 
 	value, err := strconv.ParseFloat(unsafeString(line[s1+1:s2]), 64)
 	if err != nil || math.IsNaN(value) {
+		logger.Error("Can't parse value", zap.Error(err))
 		return nil, 0, 0, errParseValue
 	}
 	s3 := len(line) - 1
 
 	ts, err := strconv.ParseFloat(unsafeString(line[s2+1:s3]), 64)
 	if err != nil || math.IsNaN(ts) || math.IsInf(ts, 0) {
+		logger.Error("Can't parse timestamp", zap.Error(err))
 		return nil, 0, 0, errParseTimestamp
 	}
 

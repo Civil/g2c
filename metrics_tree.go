@@ -36,12 +36,11 @@ func metricsTreeUpdater() {
 			time.Sleep(1 * time.Second)
 			continue
 		}
-		logger.Info("I have work!")
 
 		for number := range metricsTreeUpdateQueues {
 			metricsTreeUpdateQueues[number].Lock()
 			updateList = append(updateList, metricsTreeUpdateQueues[number].data...)
-			metricsTreeUpdateQueues[number].data = metricsTreeUpdateQueues[number].data[:0]
+			metricsTreeUpdateQueues[number].data = make([][]byte, 0, len(metricsTreeUpdateQueues[number].data))
 			metricsTreeUpdateQueues[number].Unlock()
 		}
 
@@ -51,7 +50,7 @@ func metricsTreeUpdater() {
 			time.Sleep(1 * time.Second)
 			continue
 		}
-		logger.Info("updateList", zap.Int("len", len(updateList)))
+		logger.Info("metricTreeUpdate: got tree update list", zap.Int("len", len(updateList)))
 		prefixList := make(map[string]int)
 
 		ts = atomic.LoadUint32(&writerTime)
@@ -119,6 +118,7 @@ func metricsTreeUpdater() {
 			continue
 		}
 		buffer.Write(header)
+		logger.Info("metricTreeUpdate: done")
 
 		// TODO: Remove hardcoded sleep time
 		time.Sleep(60 * time.Second)
