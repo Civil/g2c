@@ -33,7 +33,6 @@ func metricsTreeUpdater() {
 	sentNames := 0
 	for {
 		haveWork := atomic.CompareAndSwapInt64(&treeNeedsUpdate, 1, 0)
-		logger.Info("have work", zap.Bool("haveWork", haveWork))
 		if !haveWork {
 			time.Sleep(1 * time.Second)
 		}
