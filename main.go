@@ -15,6 +15,7 @@ import (
 	"time"
 )
 
+// TODO: Main is a mess now, clean it up
 func main() {
 	var err error
 	listen := flag.String("l", ":2003", "Graphite Line Protocol listener")

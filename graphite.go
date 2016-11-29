@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+// TODO: Make a module out of this code
+
 var errParseTimestamp = errors.New("Can't parse timestamp")
 var errParseGeneral = errors.New("Can't parse line")
 
@@ -33,6 +35,7 @@ func checkTimestamp(value []byte) error {
 func sanitizePoint(line []byte, number int) ([]byte, error) {
 	spacesCnt := 0
 	prevIdx := 0
+	// TODO: use bytes.Index()
 	for idx := range line {
 		if line[idx] == ' ' {
 			line[idx] = '\t'
@@ -98,6 +101,7 @@ func processGraphite(c net.Conn) {
 
 	reader := bufio.NewReaderSize(c, 32*1024)
 	metricsPending := 0
+	// TODO: This is not working at all, replace it with better buffers.
 	_ = c.SetReadDeadline(time.Now().Add(30 * time.Second))
 	var dataBuffer [][][]byte = make([][][]byte, Config.Senders)
 	hash := fnv.New32a()
@@ -122,11 +126,14 @@ func processGraphite(c net.Conn) {
 			logger.Error("Line doesn't contain any spaces", zap.String("line", string(line)))
 			continue
 		}
+
+		// Compute the hash here, so workers will get the same metrics all the time
 		hash.Write(line[:idx])
 		pos := int(hash.Sum32() % uint32(Config.Senders))
 		dataBuffer[pos] = append(dataBuffer[pos], line)
 		metricsPending++
 
+		// TODO: Rethink the limits here
 		if metricsPending >= Config.ClickhouseSendInterval || reader.Buffered() == 0 {
 			metricsPending = 0
 			for cnt := range dataBuffer {

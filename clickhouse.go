@@ -34,7 +34,6 @@ func clickHouseWriter(number int) {
 		queues[number].data = make([][]byte, 0, len(data))
 		queues[number].Unlock()
 
-		//metricsTreeMutex.RLock()
 		for _, line := range data {
 			ts = atomic.LoadInt64(&writerTime)
 			if ts != prevTs {
@@ -45,6 +44,9 @@ func clickHouseWriter(number int) {
 
 			idx := bytes.IndexByte(line, ' ')
 			name := line[:idx]
+			// As of Go 1.7 unsafeString should be safe to use here
+			// TODO: Try to find elss uglier solution that accepts []byte
+			// TODO: Speed up this code
 			_, ok := metricsList[unsafeString(name)]
 			if !ok {
 				metricsList[unsafeString(name)] = 1
@@ -59,9 +61,9 @@ func clickHouseWriter(number int) {
 			Metrics.MetricsReceived.Add(1)
 			sentMetrics++
 		}
-		//metricsTreeMutex.RUnlock()
 
 		if buffer.Len() > len(header) {
+			// We don't want to lock mutex if we don't need to
 			if len(newMetricsQueue) > 0 {
 				metricsTreeUpdateQueues[number].Lock()
 				metricsTreeUpdateQueues[number].data = append(metricsTreeUpdateQueues[number].data, newMetricsQueue...)

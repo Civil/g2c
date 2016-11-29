@@ -27,6 +27,7 @@ func metricsTreeUpdater() {
 	date := []byte(time.Unix(ts, 0).Format("2006-01-02"))
 
 	client := http.Client{
+		// TODO: Remove hardcoded sleep time
 		Timeout: 15 * time.Second,
 	}
 	sentNames := 0
@@ -45,6 +46,8 @@ func metricsTreeUpdater() {
 		}
 
 		if len(updateList) == 0 {
+			// We want faster reaction on updates, so sleep time here is different
+			// TODO: Remove hardcoded sleep time
 			time.Sleep(1 * time.Second)
 			continue
 		}
@@ -59,6 +62,9 @@ func metricsTreeUpdater() {
 
 		for _, metric := range updateList {
 			level := 1
+			// unsafeString is "safe to use" here at least as of Go 1.7 version.
+			// Due to internal hashmap implementation and to the fact that prefixList
+			// is short-living object, metric will still be here and won't be collected by GC
 			_, ok = prefixList[unsafeString(metric)]
 			if ok {
 				continue
@@ -74,6 +80,7 @@ func metricsTreeUpdater() {
 						level++
 						continue
 					}
+					// TODO: Generalize this code with a 'buffer.Write' block below
 					prefixList[unsafeString(metric[:idx])] = 1
 					buffer.Write(date)
 					buffer.WriteByte('\t')
@@ -103,14 +110,17 @@ func metricsTreeUpdater() {
 			sentNames = 0
 		}
 		if buffer.Len() > 0 {
+			// TODO: We should maintain buffer if Clickhouse is not available
 			logger.Error("Buffer is not empty. Handling this situation is not implemented yet")
 			buffer.Reset()
 			buffer.Write(header)
+			// TODO: Remove hardcoded sleep time
 			time.Sleep(60 * time.Second)
 			continue
 		}
 		buffer.Write(header)
 
+		// TODO: Remove hardcoded sleep time
 		time.Sleep(60 * time.Second)
 	}
 }

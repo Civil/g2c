@@ -8,7 +8,6 @@ import (
 )
 
 func sendData(client *http.Client, endpoint string, buffer io.Reader) error {
-	//	logger.Debug("Sending data to clickhouse", zap.Int("sender", number), zap.String("request", string(buffer.String())))
 	res, err := client.Post(endpoint, "text/plain", buffer)
 	if err != nil {
 		logger.Error("Error posting data to clickhouse", zap.Error(err))

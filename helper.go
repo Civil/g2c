@@ -11,6 +11,8 @@ import (
 
 var logger zap.Logger
 
+// TODO: Fix config variable names
+// TODO: Make use of config files
 // Config is a structure with general configuration data
 var Config = struct {
 	Senders                int
