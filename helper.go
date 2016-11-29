@@ -1,12 +1,12 @@
 package main
 
 import (
-	"sync"
-	"time"
 	"expvar"
 	"github.com/uber-go/zap"
-	"unsafe"
+	"sync"
 	"sync/atomic"
+	"time"
+	"unsafe"
 )
 
 var logger zap.Logger
@@ -35,7 +35,6 @@ var Config = struct {
 	GraphiteHost:           "",
 	ResetMetrics:           false,
 }
-
 
 // Metrics is a structure that store all internal metrics
 var Metrics = struct {
@@ -81,7 +80,7 @@ type queue struct {
 
 var queues []queue
 
-var writerTime int64
+var writerTime uint32
 
 func timeUpdater(exit <-chan struct{}) {
 	tick := time.Tick(1 * time.Second)
@@ -92,10 +91,10 @@ func timeUpdater(exit <-chan struct{}) {
 			return
 		case <-tick:
 			if ticks < 60*60 {
-				atomic.AddInt64(&writerTime, 1)
+				atomic.AddUint32(&writerTime, 1)
 			} else {
-				currentTime := time.Now().Unix()
-				atomic.StoreInt64(&writerTime, currentTime)
+				currentTime := uint32(time.Now().Unix())
+				atomic.StoreUint32(&writerTime, currentTime)
 				ticks = 0
 			}
 			ticks++

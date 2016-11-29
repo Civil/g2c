@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-
 var metricsTree map[string]int
 var metricsTreeUpdateQueues []queue
 
@@ -22,9 +21,9 @@ func metricsTreeUpdater() {
 	var ok bool
 	header := []byte("insert into " + Config.GraphiteTreeDB + " format TabSeparated\n")
 	buffer := bytes.NewBuffer(header)
-	ts := atomic.LoadInt64(&writerTime)
+	ts := atomic.LoadUint32(&writerTime)
 	prevTs := ts
-	date := []byte(time.Unix(ts, 0).Format("2006-01-02"))
+	date := []byte(time.Unix(int64(ts), 0).Format("2006-01-02"))
 
 	client := http.Client{
 		// TODO: Remove hardcoded sleep time
@@ -35,12 +34,14 @@ func metricsTreeUpdater() {
 		haveWork := atomic.CompareAndSwapInt64(&treeNeedsUpdate, 1, 0)
 		if !haveWork {
 			time.Sleep(1 * time.Second)
+			continue
 		}
+		logger.Info("I have work!")
 
 		for number := range metricsTreeUpdateQueues {
 			metricsTreeUpdateQueues[number].Lock()
 			updateList = append(updateList, metricsTreeUpdateQueues[number].data...)
-			metricsTreeUpdateQueues[number].data = make([][]byte, 0, 10000)
+			metricsTreeUpdateQueues[number].data = metricsTreeUpdateQueues[number].data[:0]
 			metricsTreeUpdateQueues[number].Unlock()
 		}
 
@@ -53,10 +54,10 @@ func metricsTreeUpdater() {
 		logger.Info("updateList", zap.Int("len", len(updateList)))
 		prefixList := make(map[string]int)
 
-		ts = atomic.LoadInt64(&writerTime)
+		ts = atomic.LoadUint32(&writerTime)
 		if ts != prevTs {
 			prevTs = ts
-			date = []byte(time.Unix(ts, 0).Format("2006-01-02"))
+			date = []byte(time.Unix(int64(ts), 0).Format("2006-01-02"))
 		}
 
 		for _, metric := range updateList {

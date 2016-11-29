@@ -76,7 +76,7 @@ func sanitizePoint(line []byte, number int) ([]byte, error) {
 	return line, nil
 }
 
-func preparePoint(line []byte, buffer *bytes.Buffer, date, version []byte, number int) error {
+func preparePointText(line []byte, buffer *bytes.Buffer, date, version []byte, number int) error {
 	point, err := sanitizePoint(line, number)
 	if err != nil {
 		return err
@@ -91,7 +91,7 @@ func preparePoint(line []byte, buffer *bytes.Buffer, date, version []byte, numbe
 
 }
 
-func processGraphite(c net.Conn) {
+func processGraphiteText(c net.Conn) {
 	defer func() {
 		err := c.Close()
 		if err != nil {

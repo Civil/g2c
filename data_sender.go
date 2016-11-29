@@ -1,13 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"github.com/uber-go/zap"
 	"io"
 	"io/ioutil"
 	"net/http"
 )
 
-func sendData(client *http.Client, endpoint string, buffer io.Reader) error {
+// func sendData(client *http.Client, endpoint string, buffer io.Reader) error {
+func sendData(client *http.Client, endpoint string, buffer *bytes.Buffer) error {
 	res, err := client.Post(endpoint, "text/plain", buffer)
 	if err != nil {
 		logger.Error("Error posting data to clickhouse", zap.Error(err))

@@ -35,8 +35,8 @@ func main() {
 	Config.QueueLimitElements = *queueLimit
 	Config.ResetMetrics = *resetMetrics
 	Config.GraphiteHost = *graphiteHost
+	Config.Senders = *senders
 
-	GraphiteDBEndpoint = Config.Endpoint + "/db/" + Config.GraphiteDB + "/series"
 	GraphiteTreeDBEndpoint = Config.Endpoint + "/db/" + Config.GraphiteTreeDB + "/series"
 
 	/*
@@ -62,8 +62,8 @@ func main() {
 
 	exit := make(chan struct{})
 
-	currentTime := time.Now().Unix()
-	atomic.StoreInt64(&writerTime, currentTime)
+	currentTime := uint32(time.Now().Unix())
+	atomic.StoreUint32(&writerTime, currentTime)
 	go timeUpdater(exit)
 
 	if *graphiteHost != "" {
