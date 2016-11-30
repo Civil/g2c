@@ -103,7 +103,7 @@ func processGraphiteText(c net.Conn) {
 	metricsPending := 0
 	// TODO: This is not working at all, replace it with better buffers.
 	_ = c.SetReadDeadline(time.Now().Add(30 * time.Second))
-	var dataBuffer [][][]byte = make([][][]byte, Config.Senders)
+	dataBuffer := make([][][]byte, Config.Senders)
 	hash := fnv.New32a()
 	for {
 		line, err := reader.ReadBytes('\n')

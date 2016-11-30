@@ -13,6 +13,7 @@ func clickHouseWriter(number int) {
 	header := []byte{}
 	version := atomic.LoadUint32(&writerTime)
 	buffer := bytes.NewBuffer(header)
+	buffer.Grow(Config.QueueLimitElements * 100) // Average buffer size
 	sleepTime := time.Duration(2*1000/Config.Senders) * time.Millisecond
 	client := http.Client{
 		Timeout: 15 * time.Second,
@@ -49,7 +50,8 @@ func clickHouseWriter(number int) {
 			sentMetrics++
 		}
 
-		if buffer.Len() > len(header) {
+		bufferLen := buffer.Len()
+		if bufferLen > 0 {
 			// We don't want to lock mutex if we don't need to
 			if len(newMetricsQueue) > 0 {
 				metricsTreeUpdateQueues[number].Lock()
@@ -72,7 +74,7 @@ func clickHouseWriter(number int) {
 				logger.Error("Buffer is not empty. Handling this situation is not implemented yet")
 				buffer.Reset()
 			}
-			buffer.Write(header)
+			buffer.Grow(bufferLen) // Make it suitable for the same amount of data
 		}
 
 		waitTime := time.Since(sendStartTime)

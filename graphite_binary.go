@@ -17,11 +17,6 @@ import (
 var errParseName = errors.New("Can't parse name")
 var errParseValue = errors.New("Can't parse value")
 
-func parseTimestamp(value []byte) (uint32, error) {
-	v, err := strconv.ParseFloat(unsafeString(value), 64)
-	return uint32(v), err
-}
-
 func parsePoint(line []byte) ([]byte, float64, uint32, error) {
 	s1 := bytes.IndexByte(line, ' ')
 	// Some sane limit
@@ -51,7 +46,7 @@ func parsePoint(line []byte) ([]byte, float64, uint32, error) {
 }
 
 // TODO: Make a module out of this code
-func preparePoint(line []byte, buffer *bytes.Buffer, version uint32, days *DaysFrom1970, number int) ([]byte, error) {
+func preparePoint(line []byte, buffer io.Writer, version uint32, days *DaysFrom1970, number int) ([]byte, error) {
 	name, value, ts, err := parsePoint(line)
 	if err != nil {
 		return nil, err
@@ -97,7 +92,7 @@ func processGraphite(c net.Conn) {
 	metricsPending := 0
 	// TODO: This is not working at all, replace it with better buffers.
 	_ = c.SetReadDeadline(time.Now().Add(30 * time.Second))
-	var dataBuffer [][][]byte = make([][][]byte, Config.Senders)
+	dataBuffer := make([][][]byte, Config.Senders)
 	hash := fnv.New32a()
 	for {
 		line, err := reader.ReadBytes('\n')
