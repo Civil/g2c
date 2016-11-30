@@ -10,6 +10,68 @@ Usage
 
 TODO
 
+Clickhouse Configuration
+-----
+
+For compatibility and performance reason g2c will send metric names to a separate database. You need to create them.
+
+In case of single-server setup:
+```sql
+CREATE TABLE graphite (
+  Path String,
+  Value Float64,
+  Time UInt32,
+  Date Date,
+  Timestamp UInt32
+) ENGINE = GraphiteMergeTree(Date, (Path, Time), 8192, 'graphite_rollup');
+
+CREATE TABLE graphite_tree (
+  Date Date,
+  Level UInt32,
+  Path String
+) ENGINE = ReplacingMergeTree(Date, (Level, Path), 8192);
+```
+
+For a clustered clickhouse you can use following sql (on each of the servers in cluster):
+```sql
+CREATE TABLE graphite_local (
+  Path String,
+  Value Float64,
+  Time UInt32,
+  Date Date,
+  Timestamp UInt32
+) ENGINE = GraphiteMergeTree(Date, (Path, Time), 8192, 'graphite_rollup');
+
+CREATE TABLE graphite_tree_local (
+  Date Date,
+  Level UInt32,
+  Path String
+) ENGINE = ReplacingMergeTree(Date, (Level, Path), 8192);
+
+CREATE TABLE graphite (
+  Path String,
+  Value Float64,
+  Time UInt32,
+  Date Date,
+  Timestamp UInt32
+) ENGINE = Distributed(graphite, 'default', 'graphite_local', sipHash64(Path))
+
+CREATE TABLE graphite_tree (
+  Date Date,
+  Level UInt32,
+  Path String
+) ENGINE = Distributed(graphite, 'default', 'graphite_tree_local', sipHash64(Path))
+```
+
+To achieve good results it's also good idea to add following line to your users.xml profiles/default section:
+
+```xml
+<background_pool_size>32</background_pool_size>
+```
+
+This will increase amount of background jobs that can run in parallel and will speed up ClickHouse's internal merge process. Though it will significantly increase Disk and CPU consumption.
+
+
 Status
 ------
 Proof of concept. Prototype. Use with caution.
