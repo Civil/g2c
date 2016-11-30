@@ -18,8 +18,8 @@ func clickHouseWriter(number int) {
 	client := http.Client{
 		Timeout: 15 * time.Second,
 	}
-	metricsList := make(map[string]int)
-	newMetricsQueue := make([][]byte, 0, 10000)
+	metricsList := make(map[string]int, 500000)
+	newMetricsQueue := make([][]byte, 0, 500000)
 	days := &DaysFrom1970{}
 	GraphiteDBEndpoint := Config.Endpoint + "/?query=insert+into+" + Config.GraphiteDB + "+format+RowBinary"
 	var data [][]byte
@@ -40,9 +40,9 @@ func clickHouseWriter(number int) {
 				continue
 			}
 
-			_, ok := metricsList[unsafeString(name)]
+			_, ok := metricsList[string(name)]
 			if !ok {
-				metricsList[unsafeString(name)] = 1
+				metricsList[string(name)] = 1
 				newMetricsQueue = append(newMetricsQueue, name)
 				atomic.StoreInt64(&treeNeedsUpdate, 1)
 			}

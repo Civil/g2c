@@ -25,7 +25,7 @@ var Config = struct {
 	GraphiteHost           string
 	ResetMetrics           bool
 }{
-	Senders:                4,
+	Senders:                6,
 	Endpoint:               "http://localhost:8123",
 	GraphiteDB:             "graphite",
 	GraphiteTreeDB:         "graphite_tree",

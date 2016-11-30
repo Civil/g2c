@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-var metricsTree map[string]int
 var metricsTreeUpdateQueues []queue
 
 var GraphiteTreeDBEndpoint string
@@ -51,7 +50,7 @@ func metricsTreeUpdater() {
 			continue
 		}
 		logger.Info("metricTreeUpdate: got tree update list", zap.Int("len", len(updateList)))
-		prefixList := make(map[string]int)
+		prefixList := make(map[string]int, 4*len(updateList))
 
 		ts = atomic.LoadUint32(&writerTime)
 		if ts != prevTs {
@@ -61,26 +60,23 @@ func metricsTreeUpdater() {
 
 		for _, metric := range updateList {
 			level := 1
-			// unsafeString is "safe to use" here at least as of Go 1.7 version.
-			// Due to internal hashmap implementation and to the fact that prefixList
-			// is short-living object, metric will still be here and won't be collected by GC
-			_, ok = prefixList[unsafeString(metric)]
+			_, ok = prefixList[string(metric)]
 			if ok {
 				continue
 			}
-			prefixList[unsafeString(metric)] = 1
+			prefixList[string(metric)] = 1
 			for idx := range metric {
 				if metric[idx] == '.' {
 					if idx != len(metric) {
 						idx++
 					}
-					_, ok = prefixList[unsafeString(metric[:idx])]
+					_, ok = prefixList[string(metric[:idx])]
 					if ok {
 						level++
 						continue
 					}
 					// TODO: Generalize this code with a 'buffer.Write' block below
-					prefixList[unsafeString(metric[:idx])] = 1
+					prefixList[string(metric[:idx])] = 1
 					buffer.Write(date)
 					buffer.WriteByte('\t')
 					buffer.Write([]byte(strconv.Itoa(level)))

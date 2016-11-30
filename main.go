@@ -99,8 +99,6 @@ func main() {
 
 	queues = make([]queue, *senders)
 	metricsTreeUpdateQueues = make([]queue, *senders)
-	//metricsTree = radix.New()
-	metricsTree = make(map[string]int, 1000000)
 	go metricsTreeUpdater()
 	for i := 0; i < *senders; i++ {
 		go clickHouseWriter(i)
