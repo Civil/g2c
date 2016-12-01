@@ -86,7 +86,7 @@ Proof of concept. Prototype. Use with caution.
 
 It's not fully compatible with graphite line protocol yet (e.x. 'foo..bar.baz' won't be converted to 'foo.bar.baz' as it should be)
 
-Consult https://github.com/Civil/g2c/blob/master/README.md for current plans and missing features
+Consult https://github.com/Civil/g2c/blob/master/TODO.md for current plans and missing features
 
 
 
