@@ -72,6 +72,14 @@ To achieve good results it's also good idea to add following line to your users.
 This will increase amount of background jobs that can run in parallel and will speed up ClickHouse's internal merge process. Though it will significantly increase Disk and CPU consumption.
 
 
+
+Resource usage
+-----------
+
+Ingestion performance is 2.4M points per second on a 2xE5-2620v3, 128GB of RAM, consuming approx. 4.5 cores (CPU Usage from 400 to 500%, most of the time 450%, around 650-700% in first minute or two).
+
+Currently it's not optimized for memory consumption (and most probably will never be) at all and for high amount of RAM. For example to process 2.4M points per second it will allocate approx. 7GB of RAM.
+
 Status
 ------
 Proof of concept. Prototype. Use with caution.
