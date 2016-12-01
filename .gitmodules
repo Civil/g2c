@@ -1,0 +1,9 @@
+[submodule "vendor/github.com/peterbourgon/g2g"]
+	path = vendor/github.com/peterbourgon/g2g
+	url = https://github.com/peterbourgon/g2g
+[submodule "vendor/github.com/uber-go/zap"]
+	path = vendor/github.com/uber-go/zap
+	url = https://github.com/uber-go/zap
+[submodule "vendor/github.com/uber-go/atomic"]
+	path = vendor/github.com/uber-go/atomic
+	url = https://github.com/uber-go/atomic
