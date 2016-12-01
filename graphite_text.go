@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"math"
 	"time"
 )
 
@@ -17,62 +18,35 @@ import (
 var errParseTimestamp = errors.New("Can't parse timestamp")
 var errParseGeneral = errors.New("Can't parse line")
 
-func checkFloat(value []byte) error {
-	_, err := strconv.ParseFloat(unsafeString(value), 64)
-	return err
-}
-
-func checkTimestamp(value []byte) error {
-	for i := range value {
-		if value[i] < '0' || value[i] > '9' {
-			return errParseTimestamp
-		}
-	}
-	return nil
-}
-
 // We don't need to validate point at this moment, DB will handle it better
 func sanitizePoint(line []byte, number int) ([]byte, error) {
-	spacesCnt := 0
-	prevIdx := 0
-	// TODO: use bytes.Index()
-	for idx := range line {
-		if line[idx] == ' ' {
-			line[idx] = '\t'
-			if spacesCnt == 0 {
-			}
-			if spacesCnt == 2 {
-				logger.Error("more spaces than we expect", zap.Int("spaces", spacesCnt))
-				return []byte{}, errParseGeneral
-			}
-			if spacesCnt == 1 {
-				tmp := line[prevIdx:idx]
-				err := checkFloat(tmp)
-				if err != nil {
-					logger.Error("Can't parse float value")
-					return []byte{}, err
-				}
-			}
-			if spacesCnt == 2 {
-			}
-			prevIdx = idx + 1
-			spacesCnt++
-		}
+	s1 := bytes.IndexByte(line, ' ')
+	// Some sane limit
+	if s1 < 1 || s1 > 1024*1024 {
+		return []byte{}, errParseName
+	}
+	line[s1] = '\t'
+	s2 := bytes.IndexByte(line[s1+1:], ' ')
+	if s2 < 1 {
+		return []byte{}, errParseValue
+	}
+	s2 += s1 + 1
+	line[s2] = '\t'
+
+	value, err := strconv.ParseFloat(unsafeString(line[s1+1:s2]), 64)
+	if err != nil || math.IsNaN(value) {
+		logger.Error("Can't parse value", zap.Error(err))
+		return []byte{}, errParseValue
+	}
+	s3 := len(line) - 1
+
+	ts, err := strconv.ParseFloat(unsafeString(line[s2+1:s3]), 64)
+	if err != nil || math.IsNaN(ts) || math.IsInf(ts, 0) {
+		logger.Error("Can't parse timestamp", zap.Error(err))
+		return []byte{}, errParseTimestamp
 	}
 
-	if spacesCnt != 2 {
-		logger.Error("Found != 2 spaces", zap.Int("spaces", spacesCnt))
-		return []byte{}, errParseGeneral
-	}
-
-	tmp := line[prevIdx : len(line)-2]
-	err := checkTimestamp(tmp)
-	if err != nil {
-		logger.Error("Can't parse timestamp")
-		return []byte{}, err
-	}
-
-	line[len(line)-1] = '\t'
+	line[s3] = '\t'
 	return line, nil
 }
 
