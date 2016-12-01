@@ -101,8 +101,13 @@ func processGraphiteText(c net.Conn) {
 
 	reader := bufio.NewReaderSize(c, 32*1024)
 	metricsPending := 0
-	// TODO: This is not working at all, replace it with better buffers.
-	_ = c.SetReadDeadline(time.Now().Add(30 * time.Second))
+	lastDeadline := time.Now()
+	readTimeout := 30 * time.Second
+	err := c.SetReadDeadline(lastDeadline.Add(readTimeout))
+	if err != nil {
+		logger.Error("Failed to set read deadline", zap.Error(err))
+		return
+	}
 	dataBuffer := make([][][]byte, Config.Senders)
 	hash := fnv.New32a()
 	for {
@@ -119,6 +124,15 @@ func processGraphiteText(c net.Conn) {
 				logger.Error("Unknown error", zap.Error(err))
 			}
 			break
+		}
+		now := time.Now()
+		if now.Sub(lastDeadline) > (readTimeout >> 2) {
+			err = c.SetReadDeadline(now.Add(readTimeout))
+			if err != nil {
+				logger.Error("Failed to set read deadline", zap.Error(err))
+				break
+			}
+			lastDeadline = now
 		}
 		idx := bytes.IndexByte(line, ' ')
 		if idx == -1 {
